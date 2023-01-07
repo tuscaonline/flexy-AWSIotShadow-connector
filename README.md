@@ -2,7 +2,7 @@
 a connector to make digital twins with Ewon Flexy and AwsIot
 
 ## How to use
-
+Link to the download https://github.com/tuscaonline/flexy-AWSIotShadow-connector/releases/tag/0.1
 1. Create a thing in AWS Iot and get the certificate and private key
 2. Modify the policy of thing with the folowing one:
 ```
