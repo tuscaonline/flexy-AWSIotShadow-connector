@@ -122,7 +122,7 @@ If you want to update a Tag with the name `StrPoint` you just need to put a json
 ```
 If the tag don't exist in ewon you will see error message in log :
 
-`	[AWIOT ERR] Error update Tag Value : StrPoint Err : java.lang.IllegalAccessException: Item not found`
+`[AWIOT ERR] Error update Tag Value : StrPoint Err : java.lang.IllegalAccessException: Item not found`
 
 ## Update Tag Database
 If you change the configuration of a Tag, the IoServer can't detect it. So you need to go in IoServer configuration and click on the Update buton to refresh the tag database.
