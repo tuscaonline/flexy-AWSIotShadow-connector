@@ -1,0 +1,3 @@
+"TagId";"TagName";"Value";"AlStatus";"AlType";"Quality"
+8;"DwordPoint";321579;2;2;65472
+11;"StringPoint";"Hallo E";0;0;65472

@@ -1,0 +1,10 @@
+thingName:thingName
+caFile:/usr/certs/AmazonRootCA1.pem
+thingPublicCert:/usr/certs/thingName-certificate.pem.crt
+thingPrivateKey:/usr/certs/thingName-private.pem.key
+brokerAddress:xxxxx-ats.iot.ap-southeast-2.amazonaws.com
+brokerPort:8883
+debug:false
+periodicFlushTime:20
+periodicGroups:ABCD
+onChangeGroups:ABCD
