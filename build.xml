@@ -18,7 +18,7 @@
 	<property name="FlexyPassword" value="adm" />
 
 	<!-- The Flexy IP address -->
-	<property name="FlexyIP" value="172.16.222.25" />
+	<property name="FlexyIP" value="192.168.222.1" />
 
 	<!-- Enable Debug mode -> Type 'true' if online debugging is used -->
 	<property name="Debug" value="true" />
@@ -42,7 +42,7 @@
 	<property name="lib.dir" value="lib" />
 	<property name="projectHome" location="." />
 
-	<target name="buildjar">
+	<target name="buildjar" depends="resolve">
 		<jar destfile="${projectHome}/${build.dir}/${ProjectName}.jar">
 			<fileset dir="${projectHome}/bin"  includes="**/*.class" />
 			<zipgroupfileset dir="${lib.dir}" includes="**/*.jar" excludes="**/*sources.jar, **/*javadoc.jar, hamcrest-core-1.1.jar, junit-4.10.jar" />
