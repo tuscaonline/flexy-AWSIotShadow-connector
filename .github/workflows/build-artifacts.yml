@@ -1,0 +1,52 @@
+# HMS Networks Solution Center
+# Artifact Build Action for Maven-based Ewon ETK Projects
+# Version: 2.1
+#
+# This action is configured to automatically run when a push
+# is made or pull request is merged to the `main` or `master`
+# branch.
+
+name: Build Artifacts
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: 16
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+            target/buildJdk
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Compile Java Files With Maven
+        run: mvn package -f pom.xml
+
+      - name: Get Current Time for Artifact Identification (Ubuntu)
+        run: echo "CURRENT_TIME=$(date +%Y-%m-%d_%H-%M-%S)" >> $GITHUB_ENV
+
+      - name: Upload Maven Artifacts (Ubuntu)
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.event.repository.name }}-ARTIFACTS-BUILD${{ env.CURRENT_TIME }}UTC
+          path: |
+            target/*.jar
+            target/*.zip
+            target/*.gz
+            target/*.bz2

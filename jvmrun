@@ -1,2 +1,0 @@
-#IOSERVER
--heapsize 5M -classpath /usr/EwonAwsIot.jar -emain net.socometra.Main

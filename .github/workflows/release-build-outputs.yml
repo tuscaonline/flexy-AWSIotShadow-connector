@@ -1,0 +1,121 @@
+# HMS Networks Solution Center
+# Build Outputs Action for Maven-based Ewon ETK Project Releases
+# Version: 2.0
+#
+# This action is configured to automatically run when a release
+# tag is created in the following syntax: `v*`.
+
+name: Release (Build Outputs)
+
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CHANGELOG_FILE_NAME: CHANGELOG.md
+  README_FILE_NAME: README.md
+  README_PDF_FILE_NAME: README.pdf
+  QUICK_START_FILE_NAME: QUICK-START.md
+  QUICK_START_PDF_FILE_NAME: QUICK-START.pdf
+  RELEASE_ZIP_INCLUDED: CHANGELOG.md README.md QUICK-START.md LICENSE src .classpath .project pom.xml build.xml starting-files images
+  RELEASE_JAR_NAME_REGEX: '*-full.jar'
+  RELEASE_JAVADOCS_NAME_REGEX: '*-javadoc.jar'
+  RELEASE_BODY_FILE: RELEASE-BODY.md
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set Up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: 16
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+            target/buildJdk
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Compile Java Files With Maven
+        run: mvn package -f pom.xml
+
+      - name: Ensure \\r\\n line endings in jvmrun
+        run: |
+          sudo apt-get install dos2unix -y
+          unix2dos ./starting-files/jvmrun
+
+      - name: Build Release Archive
+        run: |
+          zip release -r $RELEASE_ZIP_INCLUDED $(find target -name $RELEASE_JAR_NAME_REGEX) $(find target -name $RELEASE_JAVADOCS_NAME_REGEX)
+
+      - name: Extract version number from tag name
+        run: echo "VERSION_NUMBER=$(cut -d 'v' -f2- <<< ${{ github.ref }})" >> $GITHUB_ENV
+        # gets substring of github.ref after and including 'v', for example refs/tags/v1.0.0 results in v1.0.0
+
+      - name: Extract version-specific change list from CHANGELOG.md
+        run: |
+          grep -Pzo "(?<=##\sVersion\s$VERSION_NUMBER[\r\n])((.|\r|\n|\r\n)*?(?=##\sVersion.*)|(.|\r|\n|\r\z)*)"  $CHANGELOG_FILE_NAME >> $RELEASE_BODY_FILE.tmp
+          tr -d '\0' < $RELEASE_BODY_FILE.tmp > $RELEASE_BODY_FILE
+        # gets section of changelog between (not including) version-specific header and next version header using regex look-back and look-ahead and removes trailing NULL characters
+
+      - name: Setup Node for Markdown conversion to PDF
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install md-to-pdf for Markdown conversion to PDF
+        run: |
+          npm uninstall -g md-to-pdf
+          npm install -g md-to-pdf --unsafe-perm 
+
+      - name: Create PDF of README.md
+        run: md-to-pdf $README_FILE_NAME
+
+      - name: Create PDF of QUICK-START.md
+        run: md-to-pdf $QUICK_START_FILE_NAME
+
+      - name: Get Name of Artifact
+        run: |
+          ARTIFACT_PATHNAME=$(ls target/*-full.jar | head -n 1)
+          ARTIFACT_NAME=$(basename $ARTIFACT_PATHNAME)
+          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
+          echo "ARTIFACT_PATHNAME=${ARTIFACT_PATHNAME}" >> $GITHUB_ENV
+
+      - name: Get Name of Release (RepoName-Version)
+        run: echo "RELEASE_NAME=${{ github.event.repository.name }}-${{ env.VERSION_NUMBER }}" >> $GITHUB_ENV
+
+      - name: Rename Release Files (Append Repo Name and Version Number)
+        run: |
+          mv release.zip ${{ env.RELEASE_NAME }}.zip
+          mv ${{ env.README_PDF_FILE_NAME }} ${{ env.RELEASE_NAME }}-${{ env.README_PDF_FILE_NAME }}
+          mv ${{ env.QUICK_START_PDF_FILE_NAME }} ${{ env.RELEASE_NAME }}-${{ env.QUICK_START_PDF_FILE_NAME }}
+
+      - name: Create Release in Repository Releases
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          target_commitish: ${{ github.sha }}
+          name: Release ${{ env.VERSION_NUMBER }}
+          draft: false
+          prerelease: ${{ contains(github.ref,'alpha') == true || contains(github.ref,'beta') == true || contains(github.ref,'pre') == true }}
+          generate_release_notes: false
+          body_path: ${{ env.RELEASE_BODY_FILE }}
+          files: |
+            ./starting-files/*
+            ${{ env.ARTIFACT_PATHNAME }}
+            ${{ env.RELEASE_NAME }}.zip
+            ${{ env.RELEASE_NAME }}-${{ env.README_PDF_FILE_NAME }}
+            ${{ env.RELEASE_NAME }}-${{ env.QUICK_START_PDF_FILE_NAME }}
