@@ -1,8 +1,8 @@
-# Java Starter Project Changelog
+# flexy-AWSIotShadow-connector
 
-## Version 0.0.1
+## Version 0.2
 ### Features
-- Initial Release
+-  Update to Maven build system
 ### Bug Fixes
 - N/A
 ### Other
